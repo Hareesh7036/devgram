@@ -1,0 +1,23 @@
+{
+  "name": "devgram",
+  "version": "1.0.0",
+  "description": "developers space",
+  "keywords": [
+    "nodejs",
+    "javascript"
+  ],
+  "license": "ISC",
+  "author": "Hareesh Mada",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10"
+  }
+}
