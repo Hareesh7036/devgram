@@ -8,28 +8,38 @@ app.get("/", (req, res) => {
 });
 app.get(
   "/demo",
-  (req, res, next) => {
-    console.log("first response");
-    // res.send("Hello,demo World!");
-    next();
-  },
-  (req, res, next) => {
-    console.log("second response");
-    // res.send("Hello,demo World! second response");
-    next();
-  },
+  //we can also pass array of route handlers
+  [
+    (req, res, next) => {
+      console.log("first response");
+      // res.send("Hello,demo World!");
+      next();
+    },
+    (req, res, next) => {
+      console.log("second response");
+      // res.send("Hello,demo World! second response");
+      next();
+    },
+  ],
   (req, res, next) => {
     console.log("third response");
     // res.send("Hello,demo World! second response");
     next();
   },
-  (req, res, next) => {
-    console.log("final response");
-    res.send("Hello,demo World! final response");
-    // we will get cannot get /demo if we uncomment next() here
-    // next();
-  }
+  [
+    (req, res, next) => {
+      console.log("final response");
+      // res.send("Hello,demo World! final response");
+      next();
+    },
+  ]
 );
+// both are same routes but will execute as per sequence
+// first one will execute and then second one
+// if we call next() in first one
+app.get("/demo", (req, res) => {
+  res.send("Hello,demo World! GET request in seperate handler");
+});
 
 app.post("/test/:id", (req, res) => {
   const query = req.query;
