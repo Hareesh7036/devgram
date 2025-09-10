@@ -19,7 +19,16 @@ app.get("/user", userAuth, (req, res) => {
 });
 
 app.get("/user/login", (req, res) => {
-  res.send("Hello, user login World!");
+  // error handling inside route handler
+  try {
+    throw new Error("Something went wrong!");
+    res.send("Hello, user login World!");
+  } catch (error) {
+    res.status(500).send("Internal Server Error");
+  }
+
+  // this is not recommended because it will expose some internal details to user
+  //throw new Error("Something went wrong!");
 });
 
 app.get("/admin/deleteUser", (req, res) => {
@@ -71,6 +80,14 @@ app.post("/test/:id", (req, res) => {
     `sample text length is: ${sample.length} and name is: ${name} and id is: ${id}`
   );
 });
+
+// error handling middleware for all routes
+// app.use("/", (err, req, res, next) => {
+//   if (err) {
+//     console.error(err.message);
+//     res.status(500).send("Something broke!");
+//   }
+// });
 
 app.listen(8080, () => {
   console.log("Server is running on http://localhost:8080");
