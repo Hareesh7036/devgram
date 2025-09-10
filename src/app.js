@@ -1,10 +1,29 @@
 const express = require("express");
+const { adminAuth, userAuth } = require("./middlewares/auth");
 const app = express();
 
 app.use(express.json());
 
+app.use("/admin", adminAuth); //middleware for all admin routes
+
 app.get("/", (req, res) => {
   res.send("Hello, World!");
+});
+app.get("/admin/getData", (req, res) => {
+  res.send("Hello, getData World!");
+});
+
+// here userAuth middleware will only work for /user route
+app.get("/user", userAuth, (req, res) => {
+  res.send("Hello, user World!");
+});
+
+app.get("/user/login", (req, res) => {
+  res.send("Hello, user login World!");
+});
+
+app.get("/admin/deleteUser", (req, res) => {
+  res.send("Hello, deleteUser World!");
 });
 app.get(
   "/demo",
