@@ -6,7 +6,7 @@ const connectDB = require("./config/database");
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  const { firstName, lastName, emailId, password, age } = req.body;
+  const { firstName, lastName, emailId, password, age, skills } = req.body;
 
   // instance of the user model
   const user = new User({
@@ -15,13 +15,24 @@ app.post("/signup", async (req, res) => {
     emailId,
     password,
     age,
+    skills,
   });
+  if (skills?.length > 10) {
+    return res.status(400).send("Skills cannot be more than 10");
+  } else {
+    let areSkillsNotValid = skills?.some((skill) => skill.length > 15);
+    if (areSkillsNotValid) {
+      return res
+        .status(400)
+        .send("Each skill cannot be more than 15 characters");
+    }
+  }
   try {
     await user.save();
     res.send("User signed up successfully");
   } catch (err) {
     console.error("Error saving user:", err);
-    res.status(500).send("Error saving user");
+    res.status(500).send(err.message);
   }
 });
 // get user by email id..
