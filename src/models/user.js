@@ -21,22 +21,19 @@ const userSchema = new mongoose.Schema(
       trim: true,
       validate: {
         validator: function (email) {
-          if (!validator.isEmail(email)) {
-            throw new Error("This is not a valid email");
-          }
+          return validator.isEmail(email);
         },
+        message: "is not a valid email!",
       },
     },
     password: {
       type: String,
       required: true,
-      maxLength: 15,
       validate: {
         validator: function (password) {
-          if (!validator.isStrongPassword(password)) {
-            throw new Error("Password is not strong enough");
-          }
+          return validator.isStrongPassword(password);
         },
+        message: "is not a strong password!",
       },
     },
     age: {

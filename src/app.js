@@ -2,37 +2,53 @@ const express = require("express");
 const app = express();
 const User = require("./models/user");
 const connectDB = require("./config/database");
+const { validateSignupData } = require("./utils/validations");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
   const { firstName, lastName, emailId, password, age, skills } = req.body;
 
-  // instance of the user model
-  const user = new User({
-    firstName,
-    lastName,
-    emailId,
-    password,
-    age,
-    skills,
-  });
-  if (skills?.length > 10) {
-    return res.status(400).send("Skills cannot be more than 10");
-  } else {
-    let areSkillsNotValid = skills?.some((skill) => skill.length > 15);
-    if (areSkillsNotValid) {
-      return res
-        .status(400)
-        .send("Each skill cannot be more than 15 characters");
-    }
-  }
   try {
+    // validations
+    validateSignupData(req.body);
+    // password encryption can be done here using bcrypt
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // instance of the user model
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: hashedPassword,
+      age,
+      skills,
+    });
+    // save user to db
+
     await user.save();
     res.send("User signed up successfully");
   } catch (err) {
     console.error("Error saving user:", err);
-    res.status(500).send(err.message);
+    res.status(500).send("ERROR: " + err.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  const { emailId, password } = req.body;
+  try {
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send("Invalid password");
+    } else {
+      res.send("Login successful");
+    }
+  } catch (err) {
+    res.status(400).send("something went wrong");
   }
 });
 // get user by email id..
