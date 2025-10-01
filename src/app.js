@@ -6,6 +6,7 @@ const { validateSignupData } = require("./utils/validations");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const { useAuth } = require("./middlewares/auth");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -52,7 +53,7 @@ app.post("/login", async (req, res) => {
         { userId: user._id },
         process.env.JWT_SECRET,
         {
-          expiresIn: "1h",
+          expiresIn: "1d",
         }
       );
       res.cookie("token", token);
@@ -63,28 +64,16 @@ app.post("/login", async (req, res) => {
   }
 });
 // get user by email id..
-app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
+app.get("/user", useAuth, async (req, res) => {
   try {
-    const user = await User.findOne({ emailId: userEmail });
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-    res.send(user);
+    res.send(req.user);
   } catch (err) {
     res.status(400).send("something went wrong");
   }
 });
 
-app.get("/feed", async (req, res) => {
+app.get("/feed", useAuth, async (req, res) => {
   try {
-    const { token } = req.cookies;
-    if (!token) {
-      return res.status(401).send("Unauthorized: No token provided");
-    }
-    const { userId } = await jwt.verify(token, process.env.JWT_SECRET);
-    // if token is valid, proceed to fetch the feed
-
     const feed = await User.find({});
     res.send(feed);
   } catch (err) {
@@ -92,9 +81,9 @@ app.get("/feed", async (req, res) => {
   }
 });
 
-app.delete("/user", async (req, res) => {
-  const userId = req.body.id;
+app.delete("/user", useAuth, async (req, res) => {
   try {
+    const userId = req.body.id;
     const deletedUser = await User.findByIdAndDelete(userId);
     if (!deletedUser) {
       return res.status(404).send("User not found");
