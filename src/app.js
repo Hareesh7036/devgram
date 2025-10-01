@@ -49,13 +49,7 @@ app.post("/login", async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).send("Invalid password");
     } else {
-      const token = await jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: "1d",
-        }
-      );
+      const token = await user.getJWT();
       res.cookie("token", token);
       res.send("Login successful");
     }
