@@ -4,8 +4,11 @@ const User = require("./models/user");
 const connectDB = require("./config/database");
 const { validateSignupData } = require("./utils/validations");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   const { firstName, lastName, emailId, password, age, skills } = req.body;
@@ -45,6 +48,14 @@ app.post("/login", async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).send("Invalid password");
     } else {
+      const token = await jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h",
+        }
+      );
+      res.cookie("token", token);
       res.send("Login successful");
     }
   } catch (err) {
@@ -67,6 +78,13 @@ app.get("/user", async (req, res) => {
 
 app.get("/feed", async (req, res) => {
   try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res.status(401).send("Unauthorized: No token provided");
+    }
+    const { userId } = await jwt.verify(token, process.env.JWT_SECRET);
+    // if token is valid, proceed to fetch the feed
+
     const feed = await User.find({});
     res.send(feed);
   } catch (err) {
