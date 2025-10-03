@@ -45,7 +45,7 @@ app.post("/login", async (req, res) => {
     if (!user) {
       return res.status(404).send("User not found");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password);
     if (!isPasswordValid) {
       return res.status(401).send("Invalid password");
     } else {
@@ -54,7 +54,7 @@ app.post("/login", async (req, res) => {
       res.send("Login successful");
     }
   } catch (err) {
-    res.status(400).send("something went wrong");
+    res.status(400).send("Error:" + err.message);
   }
 });
 // get user by email id..
