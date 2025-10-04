@@ -3,6 +3,7 @@ const { validateSignupData } = require("../utils/validations");
 const authRouter = express.Router();
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
+const { useAuth } = require("../middlewares/auth");
 
 authRouter.post("/signup", async (req, res) => {
   const { firstName, lastName, emailId, password, age, skills } = req.body;
@@ -36,11 +37,11 @@ authRouter.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ emailId: emailId });
     if (!user) {
-      return res.status(404).send("User not found");
+      return res.status(404).send("Invalid credentials");
     }
     const isPasswordValid = await user.validatePassword(password);
     if (!isPasswordValid) {
-      return res.status(401).send("Invalid password");
+      return res.status(401).send("Invalid credentials");
     } else {
       const token = await user.getJWT();
       res.cookie("token", token);
@@ -49,6 +50,14 @@ authRouter.post("/login", async (req, res) => {
   } catch (err) {
     res.status(400).send("Error:" + err.message);
   }
+});
+
+authRouter.post("/logout", useAuth, (req, res) => {
+  res
+    .cookie("token", null, {
+      expires: new Date(Date.now()),
+    })
+    .send("Logged out successfully");
 });
 
 module.exports = authRouter;
