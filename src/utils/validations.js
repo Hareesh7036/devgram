@@ -27,6 +27,7 @@ function validateEditProfileData(data) {
     "gender",
     "about",
     "skills",
+    "photoUrl",
   ];
   const dataFields = Object.keys(data);
   const isValidOperation = dataFields.every((field) =>
