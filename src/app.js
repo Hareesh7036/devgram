@@ -25,15 +25,6 @@ app.use("/", connectionRequestRouter);
 
 app.use("/", userRouter);
 
-app.get("/feed", useAuth, async (req, res) => {
-  try {
-    const feed = await User.find({});
-    res.send(feed);
-  } catch (err) {
-    res.status(400).send("something went wrong");
-  }
-});
-
 app.delete("/user", useAuth, async (req, res) => {
   try {
     const userId = req.body.id;
