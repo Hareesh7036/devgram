@@ -24,7 +24,10 @@ authRouter.post("/signup", async (req, res) => {
     });
     // save user to db
     await user.save();
-    res.send("User signed up successfully");
+    const token = await user.getJWT();
+    res.cookie("token", token);
+    res.send(user);
+    res.json("User signed up successfully", user);
   } catch (err) {
     console.error("Error saving user:", err);
     res.status(500).send("ERROR: " + err.message);
