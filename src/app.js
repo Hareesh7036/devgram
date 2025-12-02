@@ -12,6 +12,7 @@ const profileRouter = require("./routers/profile");
 const connectionRequestRouter = require("./routers/request");
 const userRouter = require("./routers/user");
 const cors = require("cors");
+require("dotenv").config();
 
 app.use(express.json());
 app.use(cookieParser());

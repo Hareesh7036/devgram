@@ -1,8 +1,7 @@
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 
-// const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_SECRET = "its_personal_secret_key";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const useAuth = async (req, res, next) => {
   try {
