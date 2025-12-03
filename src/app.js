@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(cookieParser());
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://devgram-frontend.vercel.app",
+  "https://devgram-theta.vercel.app",
 ];
 
 app.use(
