@@ -30,7 +30,8 @@ app.use(
     credentials: true,
   })
 );
-// app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+//cron job for sending emails, currently disabled
+// require("./utils/cronJob");
 
 app.use("/", authRouter);
 
