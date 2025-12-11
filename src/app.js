@@ -14,6 +14,9 @@ const userRouter = require("./routers/user");
 const cors = require("cors");
 const paymentRouter = require("./routers/payment");
 require("dotenv").config();
+const http = require("http");
+const initializeSocket = require("./utils/socket");
+const chatRouter = require("./routers/chat");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -44,6 +47,8 @@ app.use("/", userRouter);
 
 app.use("/", paymentRouter);
 
+app.use("/", chatRouter);
+
 app.delete("/user", useAuth, async (req, res) => {
   try {
     const userId = req.body.id;
@@ -57,10 +62,14 @@ app.delete("/user", useAuth, async (req, res) => {
   }
 });
 
+const httpServer = http.createServer(app);
+
+initializeSocket(httpServer);
+
 connectDB()
   .then(() => {
     console.log("Database connected!!");
-    app.listen(8080, () => {
+    httpServer.listen(8080, () => {
       console.log("Server is running on http://localhost:8080");
     });
   })
