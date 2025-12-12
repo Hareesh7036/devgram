@@ -59,8 +59,16 @@ const initializeSocket = (server) => {
 
           let connectionRequest = await ConnectionRequest.findOne({
             $or: [
-              { from: userId, to: targetUserId, status: "accepted" },
-              { from: targetUserId, to: userId, status: "accepted" },
+              {
+                fromUserId: userId,
+                toUserId: targetUserId,
+                status: "accepted",
+              },
+              {
+                fromUserId: targetUserId,
+                toUserId: userId,
+                status: "accepted",
+              },
             ],
           });
 
