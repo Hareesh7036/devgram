@@ -86,4 +86,17 @@ userRouter.get("/feed", useAuth, async (req, res) => {
   }
 });
 
+userRouter.get("/user/:targetUserId", useAuth, async (req, res) => {
+  try {
+    const { targetUserId } = req.params;
+    const targetUser = await User.findById(targetUserId);
+    res.json({
+      message: "user fetched successfully",
+      data: targetUser,
+    });
+  } catch (err) {
+    res.status(400).send("Error: " + err.message);
+  }
+});
+
 module.exports = userRouter;

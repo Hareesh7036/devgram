@@ -12,6 +12,8 @@ const getSecretRoomId = (userId, targetUserId) => {
     .digest("hex");
 };
 
+const onlineUsers = new Map();
+
 const initializeSocket = (server) => {
   const io = socket(server, {
     cors: {
@@ -42,6 +44,24 @@ const initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
+    const userId = socket.user.userId;
+
+    if (!onlineUsers.has(userId)) {
+      onlineUsers.set(userId, new Set());
+    }
+    onlineUsers.get(userId).add(socket.id);
+
+    socket.on("getAllOnlineUsers", () => {
+      const onlineUsersList = [...onlineUsers.keys()];
+      socket.emit("allOnlineUsers", { onlineUsersList });
+    });
+    // socket.emit("allOnlineUsers", { onlineUsersList });
+    socket.broadcast.emit("userOnline", { userId });
+
+    console.log(
+      `✅ ${socket.user.userId} is online. Total: ${onlineUsers.size}`
+    );
+
     socket.on("joinChat", ({ firstName, userId, targetUserId }) => {
       if (socket.user.userId !== userId) return;
       const roomId = getSecretRoomId(userId, targetUserId);
@@ -105,7 +125,18 @@ const initializeSocket = (server) => {
       }
     );
 
-    socket.on("disconnect", () => {});
+    socket.on("disconnect", () => {
+      const sockets = onlineUsers.get(userId);
+      if (sockets) {
+        sockets.delete(socket.id);
+        if (sockets.size === 0) {
+          onlineUsers.delete(userId);
+          // Broadcast to ALL users: this user went offline
+          io.emit("userOffline", { userId });
+          console.log(`❌ ${socket.user.userId} went offline`);
+        }
+      }
+    });
   });
 };
 
