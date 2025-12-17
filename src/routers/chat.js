@@ -7,15 +7,24 @@ chatRouter.get("/chat/:toUserId", useAuth, async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
     const { toUserId } = req.params;
-    const chat = await Chat.findOne({
-      participants: { $all: [loggedInUserId, toUserId] },
-    }).populate({
-      path: "messages.senderId",
-      select: "firstName lastName",
-    });
+    let chat = await Chat.findOne({
+      participants: {
+        $all: [
+          { $elemMatch: { participantId: loggedInUserId } },
+          { $elemMatch: { participantId: toUserId } },
+        ],
+      },
+    }).populate([
+      { path: "messages.senderId", select: "firstName lastName" },
+      { path: "participants.participantId", select: "firstName lastName" },
+    ]);
+
     if (!chat) {
       chat = new Chat({
-        participants: [loggedInUserId, toUserId],
+        participants: [
+          { participantId: loggedInUserId },
+          { participantId: toUserId },
+        ],
         messages: [],
       });
       await chat.save();

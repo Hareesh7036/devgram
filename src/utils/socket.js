@@ -4,6 +4,7 @@ const { Chat } = require("../models/chat");
 const ConnectionRequest = require("../models/connectionRequest");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { default: mongoose } = require("mongoose");
 
 const getSecretRoomId = (userId, targetUserId) => {
   return crypto
@@ -102,27 +103,88 @@ const initializeSocket = (server) => {
           }
 
           let chat = await Chat.findOne({
-            participants: { $all: [userId, targetUserId] },
+            participants: {
+              $all: [
+                { $elemMatch: { participantId: userId } },
+                { $elemMatch: { participantId: targetUserId } },
+              ],
+            },
           });
 
           if (!chat) {
+            const chatId = new mongoose.Types.ObjectId();
             chat = new Chat({
-              participants: [userId, targetUserId],
+              _id: chatId,
+              participants: [
+                { participantId: userId },
+                { participantId: targetUserId },
+              ],
               messages: [],
             });
+            await chat.save();
           }
-
+          const messageId = new mongoose.Types.ObjectId();
           chat.messages.push({
             senderId: userId,
             text,
+            _id: messageId,
           });
 
           await chat.save();
-          io.to(roomId).emit("messageReceived", { firstName, lastName, text });
+          io.to(roomId).emit("messageReceived", {
+            firstName,
+            lastName,
+            text,
+            messageId,
+            chatId: chat._id,
+            senderId: userId,
+          });
         } catch (err) {
           console.log(err);
         }
-      }
+      },
+      socket.on(
+        "messageDelivered",
+        async ({ currentUserId, chatId, messageId, targetUserId }) => {
+          console.log("delivered message id", messageId);
+          const msgObjectId = new mongoose.Types.ObjectId(messageId);
+          const userObjectId = new mongoose.Types.ObjectId(currentUserId);
+          const chatObjectId = new mongoose.Types.ObjectId(chatId);
+
+          const updatedChat = await Chat.findOneAndUpdate(
+            {
+              _id: chatObjectId,
+              // "participants.participantId": userObjectId,
+              "messages._id": msgObjectId,
+            },
+            {
+              // $set: { "participants.$.lastSeenMsgId": msgObjectId },
+              $addToSet: { "messages.$.seenBy": userObjectId },
+            },
+            { new: true }
+          );
+          console.log("updatedChat", updatedChat);
+
+          if (!updatedChat) return;
+
+          // Find the updated message inside the array
+          const updatedMessage = updatedChat.messages.id(messageId);
+          console.log(
+            "updatedMessage",
+            updatedMessage,
+            "currentUserId",
+            currentUserId
+          );
+          if (!updatedMessage) return;
+
+          const seenBy = updatedMessage.seenBy || [];
+          console.log("emitting seenBy", seenBy);
+
+          const roomId = getSecretRoomId(currentUserId, targetUserId);
+
+          socket.to(roomId).emit("messageSeen", { messageId, seenBy });
+        }
+      )
     );
 
     socket.on("disconnect", () => {
