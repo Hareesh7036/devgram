@@ -36,4 +36,31 @@ chatRouter.get("/chat/:toUserId", useAuth, async (req, res) => {
   }
 });
 
+chatRouter.post("/chat/:chatId/markSeen", useAuth, async (req, res) => {
+  try {
+    const loggedInUserId = req.user._id;
+    const { chatId } = req.params;
+    const { messageId } = req.body;
+
+    const updatedChat = await Chat.findOneAndUpdate(
+      {
+        _id: chatId,
+        "messages._id": messageId,
+      },
+      {
+        $addToSet: { "messages.$.seenBy": loggedInUserId },
+      },
+      { new: true }
+    );
+
+    if (!updatedChat) {
+      return res.status(404).json({ error: "Chat or message not found" });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).send("Error: " + err.message);
+  }
+});
+
 module.exports = chatRouter;
