@@ -7,6 +7,7 @@ chatRouter.get("/chat/:toUserId", useAuth, async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
     const { toUserId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
     let chat = await Chat.findOne({
       participants: {
         $all: [
@@ -14,10 +15,9 @@ chatRouter.get("/chat/:toUserId", useAuth, async (req, res) => {
           { $elemMatch: { participantId: toUserId } },
         ],
       },
-    }).populate([
-      { path: "messages.senderId", select: "firstName lastName" },
-      { path: "participants.participantId", select: "firstName lastName" },
-    ]);
+    })
+      .select("_id participants messages") // need messages length
+      .lean();
 
     if (!chat) {
       chat = new Chat({
@@ -30,7 +30,28 @@ chatRouter.get("/chat/:toUserId", useAuth, async (req, res) => {
       await chat.save();
     }
 
-    res.json(chat);
+    const totalMessages = chat.messages.length;
+    const start = Math.max(0, totalMessages - page * limit);
+    const end = Math.min(limit, totalMessages - (page - 1) * limit);
+
+    const chatWithMessages = await Chat.findById(chat._id, {
+      // project only a window of messages
+      messages: { $slice: [start, end] },
+      participants: 1,
+    }).populate([
+      { path: "messages.senderId", select: "firstName lastName" },
+      { path: "participants.participantId", select: "firstName lastName" },
+    ]);
+
+    res.json({
+      chat: chatWithMessages,
+      pagination: {
+        totalMessages,
+        page,
+        limit,
+        hasMore: start > 0,
+      },
+    });
   } catch (err) {
     res.status(400).send("Error: " + err.message);
   }
