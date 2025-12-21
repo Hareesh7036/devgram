@@ -21,6 +21,10 @@ const messageSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const chatSchema = new mongoose.Schema({

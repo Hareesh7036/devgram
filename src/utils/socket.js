@@ -5,6 +5,7 @@ const ConnectionRequest = require("../models/connectionRequest");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const { default: mongoose } = require("mongoose");
+const { create } = require("../models/user");
 
 const getSecretRoomId = (userId, targetUserId) => {
   return crypto
@@ -124,10 +125,12 @@ const initializeSocket = (server) => {
             await chat.save();
           }
           const messageId = new mongoose.Types.ObjectId();
+          const createdAt = new Date();
           chat.messages.push({
             senderId: userId,
             text,
             _id: messageId,
+            createdAt: createdAt,
           });
 
           await chat.save();
@@ -138,6 +141,7 @@ const initializeSocket = (server) => {
             messageId,
             chatId: chat._id,
             senderId: userId,
+            createdAt,
           });
         } catch (err) {
           console.log(err);
