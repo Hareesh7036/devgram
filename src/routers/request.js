@@ -88,4 +88,34 @@ connectionRequestRouter.post(
   }
 );
 
+connectionRequestRouter.delete(
+  "/request/remove/:targetUserId",
+  useAuth,
+  async (req, res) => {
+    try {
+      const loggedInUserId = req.user._id;
+      const { targetUserId } = req.params;
+
+      const deletedConnection = await ConnectionRequest.findOneAndDelete({
+        status: "accepted",
+        $or: [
+          { fromUserId: loggedInUserId, toUserId: targetUserId },
+          { fromUserId: targetUserId, toUserId: loggedInUserId },
+        ],
+      });
+
+      if (!deletedConnection) {
+        return res.status(404).send("No accepted connection found");
+      }
+
+      res.json({
+        message: "Connection removed successfully",
+        data: deletedConnection,
+      });
+    } catch (err) {
+      res.status(400).send("Error: " + err.message);
+    }
+  }
+);
+
 module.exports = connectionRequestRouter;
